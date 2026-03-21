@@ -5,11 +5,11 @@ st.set_page_config(page_title="金饰利润计算", page_icon="💰", layout="ce
 # -----------------------------
 # 固定参数
 # -----------------------------
-SALES_SHIPPING = 15          # 销售运费
-COST_SHIPPING = 13           # 运费成本
-SALES_CERT_FEE = 5           # 证书销售费
-COST_CERT_FEE = 4            # 证书成本
-COST_LABOR_PER_G = 20        # 成本手工费/克
+SALES_SHIPPING = 15
+COST_SHIPPING = 13
+SALES_CERT_FEE = 5
+COST_CERT_FEE = 4
+COST_LABOR_PER_G = 20
 
 SILVER_CHAIN_COST = 33
 SILVER_CHAIN_SALE = 59
@@ -94,14 +94,14 @@ untaxed_sale_total = (
     + braid_sale
 )
 
-# 税费（只展示，不计入利润）
+# 税费
 tax_fee = untaxed_sale_total * tax_rate
 
 # 客户支付总价（含税）
 customer_total_payment = untaxed_sale_total + tax_fee
 
-# 总成本（不含税）
-total_cost = (
+# 原始成本（未加税）
+base_cost = (
     cost_gold_total
     + cost_labor_total
     + COST_SHIPPING
@@ -110,8 +110,11 @@ total_cost = (
     + braid_cost
 )
 
-# 利润与利润率（按你的最终要求：税费剔除）
-profit = untaxed_sale_total - total_cost
+# 总成本（口径B：加税）
+total_cost = base_cost + tax_fee
+
+# 利润与利润率（口径B）
+profit = customer_total_payment - total_cost
 profit_rate = 0 if total_cost == 0 else profit / total_cost
 
 # -----------------------------
@@ -135,21 +138,24 @@ with c1:
     st.write(f"含税总价：¥ {customer_total_payment:.2f}")
 
 with c2:
+    st.write(f"原始成本：¥ {base_cost:.2f}")
     st.write(f"总成本：¥ {total_cost:.2f}")
     st.write(f"销售手工费 / 克：¥ {sale_labor_per_g:.2f}")
-    st.write(f"成本手工费 / 克：¥ {COST_LABOR_PER_G:.2f}")
 
 with st.expander("查看详细拆分"):
     left, right = st.columns(2)
 
     with left:
-        st.markdown("**销售端（未税）**")
+        st.markdown("**销售端**")
         st.write(f"销售金价总额：¥ {sale_gold_total:.2f}")
         st.write(f"销售手工费总额：¥ {sale_labor_total:.2f}")
         st.write(f"销售运费：¥ {SALES_SHIPPING:.2f}")
         st.write(f"证书销售费：¥ {SALES_CERT_FEE:.2f}")
         st.write(f"银链售价：¥ {silver_chain_sale:.2f}")
         st.write(f"编绳售价：¥ {braid_sale:.2f}")
+        st.write(f"未税销售合计：¥ {untaxed_sale_total:.2f}")
+        st.write(f"税费：¥ {tax_fee:.2f}")
+        st.write(f"客户支付总价：¥ {customer_total_payment:.2f}")
 
     with right:
         st.markdown("**成本端**")
@@ -159,8 +165,11 @@ with st.expander("查看详细拆分"):
         st.write(f"证书成本：¥ {COST_CERT_FEE:.2f}")
         st.write(f"银链成本：¥ {silver_chain_cost:.2f}")
         st.write(f"编绳成本：¥ {braid_cost:.2f}")
+        st.write(f"原始成本：¥ {base_cost:.2f}")
+        st.write(f"税费：¥ {tax_fee:.2f}")
+        st.write(f"总成本：¥ {total_cost:.2f}")
 
 st.caption(
-    "公式：税费 = 未税销售合计 × 税率；客户支付总价 = 未税销售合计 + 税费；"
-    "利润 = 未税销售合计 - 总成本；利润率 = 利润 ÷ 总成本。"
+    "口径B：税费 = 未税销售合计 × 税率；客户支付总价 = 未税销售合计 + 税费；"
+    "总成本 = 原始成本 + 税费；利润 = 客户支付总价 - 总成本；利润率 = 利润 ÷ 总成本。"
 )
